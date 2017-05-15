@@ -1,22 +1,29 @@
-# Linear regression example in TF.
+# Linear regression with regulation example in TF.
 
 import tensorflow as tf
-logs_path = '/tmp/tensorflow_logs/linear2'
+import numpy as np
+logs_path = '/tmp/tensorflow_logs/linear2-regulation'
 W = tf.Variable(tf.zeros([2, 1]), name="weights")
 b = tf.Variable(0., name="bias")
+reg_lambda = 0.
 
 
 def inference(X):
     return tf.matmul(X, W) + b
 
 
-def loss(X, Y):
+def loss(X, Y, W, lambda_step):
     with tf.name_scope("Model"):
         Y_predicted = inference(X)
     m = X.shape[0]
     with tf.name_scope("Loss"):
-        cost = tf.reduce_sum(tf.squared_difference(
-            Y, Y_predicted)) / (2 * int(m))
+        # cost = tf.reduce_sum(tf.squared_difference(
+        #     Y, Y_predicted)) / (2 * int(m))
+        cost = tf.reduce_sum(tf.squared_difference(Y, Y_predicted))
+        regular = tf.multiply(lambda_step, tf.reduce_sum(tf.square(W)))
+        cost = tf.add(cost, regular)
+        cost = tf.div(cost, 2 * int(m))
+        print("lambda:", lambda_step)
     return cost
 
 
@@ -50,36 +57,45 @@ def evaluate(sess, X, Y):
     print(sess.run(inference([[65., 25.]])))  # ~ 256
 
 
+def run(sess, summary_writer, training_steps, lambda_step):
+    total_loss = loss(X, Y, W, reg_lambda)
+    train_op = train(total_loss), merged_summary_op
+    for step in range(training_steps):
+        summary = sess.run([train_op])
+        # print(summary[0][1])
+        # Write logs at every iteration
+        summary_writer.add_summary(
+            summary[0][1], (step + 1) + lambda_step * training_steps)
+        if step % 10 == 0:
+            print("step:", (step + 1) + lambda_step * training_steps,
+                  " loss: ", sess.run([total_loss]))
+
+    print("lamda:", reg_lambda, 'final cost:', sess.run([total_loss]))
+
+
 # Launch the graph in a session, setup boilerplate
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
-
     X, Y = inputs()
-    total_loss = loss(X, Y)
-
+    total_loss = loss(X, Y, W, reg_lambda)
     # Create a summary to monitor cost tensor
     tf.summary.scalar("loss", total_loss)
     # Merge all summaries into a single op
     merged_summary_op = tf.summary.merge_all()
-
     train_op = train(total_loss), merged_summary_op
-
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
     summary_writer = tf.summary.FileWriter(
         logs_path, graph=tf.get_default_graph())
     # actual training loop
-    training_steps = 3000
-    for step in range(training_steps):
-        summary = sess.run([train_op])
-        # print(summary[0][1])
-        # Write logs at every iteration
-        summary_writer.add_summary(summary[0][1], step + 1)
-        if step % 10 == 0:
-            print("step:", step + 1, " loss: ", sess.run([total_loss]))
-
+    training_steps = 1000
+    # for reg_lambda in np.linspace(0., 1., 2):
+    lambda_step = 0
+    for reg_lambda in (0., 0.5, 1.):
+        run(sess, summary_writer, training_steps, lambda_step)
+        lambda_step = lambda_step + 1
     evaluate(sess, X, Y)
 
     coord.request_stop()
