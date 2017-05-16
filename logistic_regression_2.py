@@ -11,67 +11,72 @@ with tf.name_scope("Weights"):
     W = tf.Variable(tf.zeros([5, 1]), name="weights")
     b = tf.Variable(0., name="bias")
 
-train_size = 10
+train_size = 1000
 
 # former inference is now used for combining inputs
 
 
 def combine_inputs(X):
-    with tf.name_scope("Model"):
-        combine = tf.matmul(X, W) + b
+    combine = tf.matmul(X, W) + b
     return combine
 
 
 def inference(X):
-    with tf.name_scope("Model"):
-        model = tf.sigmoid(combine_inputs(X))
+    model = tf.sigmoid(combine_inputs(X))
     return model
 
-
+ 
 def loss(X, Y):
+    with tf.name_scope("Model"):
+        combine = combine_inputs(X)
     with tf.name_scope("Loss"):
         cost = tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(logits=combine_inputs(X), labels=Y))
+            tf.nn.sigmoid_cross_entropy_with_logits(logits=combine, labels=Y))
     return cost
 
 
 def read_csv(batch_size, file_name, record_defaults):
-    filename_queue = tf.train.string_input_producer(
-        [os.path.join(os.getcwd(), file_name)])
+    with tf.name_scope("Load-data"):
+        filename_queue = tf.train.string_input_producer(
+            [os.path.join(os.getcwd(), file_name)])
 
-    reader = tf.TextLineReader(skip_header_lines=1)
-    key, value = reader.read(filename_queue)
+        reader = tf.TextLineReader(skip_header_lines=1)
+        key, value = reader.read(filename_queue)
 
-    # decode_csv will convert a Tensor from type string (the text line) in
-    # a tuple of tensor columns with the specified defaults, which also
-    # sets the data type for each column
-    decoded = tf.decode_csv(value, record_defaults=record_defaults)
+        # decode_csv will convert a Tensor from type string (the text line) in
+        # a tuple of tensor columns with the specified defaults, which also
+        # sets the data type for each column
+        decoded = tf.decode_csv(value, record_defaults=record_defaults)
 
-    # batch actually reads the file and loads "batch_size" rows in a single
-    # tensor
-    return tf.train.shuffle_batch(decoded,
-                                  batch_size=batch_size,
-                                  capacity=batch_size * 50,
-                                  min_after_dequeue=batch_size)
+        # batch actually reads the file and loads "batch_size" rows in a single
+        # tensor
+        batch = tf.train.shuffle_batch(decoded,
+                                       batch_size=batch_size,
+                                       capacity=batch_size * 50,
+                                       min_after_dequeue=batch_size)
+    return batch
 
 
 def inputs():
+    passenger_id, survived, pclass, name, sex, age, sibsp, parch, ticket, fare, cabin, embarked = \
+        read_csv(train_size, "train.csv", [[0.0], [0.0], [0], [""], [
+            ""], [0.0], [0.0], [0.0], [""], [0.0], [""], [""]])
     with tf.name_scope("Input"):
-        passenger_id, survived, pclass, name, sex, age, sibsp, parch, ticket, fare, cabin, embarked = \
-            read_csv(train_size, "train.csv", [[0.0], [0.0], [0], [""], [
-                ""], [0.0], [0.0], [0.0], [""], [0.0], [""], [""]])
         # convert categorical data
-        is_first_class = tf.to_float(tf.equal(pclass, [1]), name="is_first_class")
-        is_second_class = tf.to_float(tf.equal(pclass, [2]), name="is_second_class")
-        is_third_class = tf.to_float(tf.equal(pclass, [3]), name="is_third_class")
+        is_first_class = tf.to_float(
+            tf.equal(pclass, [1]), name="is_first_class")
+        is_second_class = tf.to_float(
+            tf.equal(pclass, [2]), name="is_second_class")
+        is_third_class = tf.to_float(
+            tf.equal(pclass, [3]), name="is_third_class")
         gender = tf.to_float(tf.equal(sex, ["female"]), name="gender")
 
         # Finally we pack all the features in a single matrix;
         # We then transpose to have a matrix with one example per row and one
         # feature per column.
-        with tf.name_scope("X"):
-            features = tf.transpose(
-                tf.stack([is_first_class, is_second_class, is_third_class, gender, age]), name='x')
+
+        features = tf.transpose(
+            tf.stack([is_first_class, is_second_class, is_third_class, gender, age]), name='xx')
 
     with tf.name_scope("Label"):
         survived = tf.reshape(survived, [train_size, 1], name='y')
@@ -88,7 +93,8 @@ def train(total_loss):
 
 
 def evaluate(sess, X, Y):
-    predicted = tf.cast(inference(X) > 0.5, tf.float32)
+    with tf.name_scope("Model"):
+        predicted = tf.cast(inference(X) > 0.5, tf.float32)
     print(sess.run(tf.reduce_mean(tf.cast(tf.equal(predicted, Y), tf.float32))))
 
 
