@@ -1,5 +1,5 @@
-# Logistic regression example in TF using Kaggle's Titanic Dataset.
-# Download train.csv from https://www.kaggle.com/c/titanic/data
+# Logistic regression example in TF using Iris Dataset.
+# Download train.csv from  https://archive.ics.uci.edu/ml/datasets/Iris
 
 import tensorflow as tf
 import numpy as np
