@@ -94,6 +94,14 @@ def evaluate(sess, X, Y):
     with tf.name_scope("Model"):
         predicted = tf.cast(tf.arg_max(inference(X), 1), tf.int32)
     print(sess.run(tf.reduce_mean(tf.cast(tf.equal(predicted, Y), tf.float32))))
+    print("----W----")
+    print(sess.run(W))
+    print("---b----")
+    print(sess.run(b))
+    print("--- predicted----")
+    print(sess.run(predicted))
+    print("--- Y ----")
+    print(sess.run(Y))
 
 
 def run(sess, summary_writer, training_steps):
@@ -125,7 +133,7 @@ with tf.Session() as sess:
     summary_writer = tf.summary.FileWriter(
         logs_path, graph=tf.get_default_graph())
     # actual training loop
-    training_steps = 100
+    training_steps = 1000
     run(sess, summary_writer, training_steps)
     evaluate(sess, X, Y)
     coord.request_stop()
