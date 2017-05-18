@@ -20,7 +20,7 @@ with tf.name_scope('Label'):
 
 # Training data
 train_X = np.array([np.arange(100)]).T
-train_Y = 5 * train_X + 8
+train_Y = 5 * train_X + 1
 train_size = train_X.size
 
 
@@ -50,9 +50,13 @@ def inputs():
 
 def train(total_loss):
     with tf.name_scope('Train'):
-        learning_rate = 0.000605
-        optimizer = tf.train.GradientDescentOptimizer(
+        # learning_rate = 0.000605
+        learning_rate = 0.1
+        # optimizer = tf.train.GradientDescentOptimizer(
+        #     learning_rate).minimize(total_loss)
+        optimizer = tf.train.AdamOptimizer(
             learning_rate).minimize(total_loss)
+
     return optimizer
 
 
@@ -86,29 +90,27 @@ def save_image(summary_writer):
     image_summary = sess.run(image_summary_op)
     summary_writer.add_summary(image_summary)
 
+# --------- Main program --------------------
+total_loss = loss(X, Y)
+# Create a summary to monitor cost tensor
+tf.summary.scalar("loss", total_loss)
+tf.summary.scalar("weight", W)
+tf.summary.scalar("bias", b)
+# Merge all summaries into a single op
+merged_summary_op = tf.summary.merge_all()
+train_op = train(total_loss), merged_summary_op
+init = tf.global_variables_initializer()
 
 # Launch the graph in a session, setup boilerplate
-init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
-    total_loss = loss(X, Y)
-
-    # Create a summary to monitor cost tensor
-    tf.summary.scalar("loss", total_loss)
-    # tf.summary.scalar("weights", W[0])
-    # tf.summary.scalar("bias", b[0])
-    # Merge all summaries into a single op
-    merged_summary_op = tf.summary.merge_all()
-
-    train_op = train(total_loss), merged_summary_op
-
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
     summary_writer = tf.summary.FileWriter(
         logs_path, graph=tf.get_default_graph())
     # actual training loop
-    training_steps = 5000
+    training_steps = 1000
     print_step = training_steps // 10
     for step in range(training_steps):
         # for (x, y) in zip(train_X, train_Y):
@@ -124,7 +126,7 @@ with tf.Session() as sess:
 
     print('W:', sess.run(W), 'b:', sess.run(b), " final loss:",
           sess.run([total_loss], feed_dict={X: train_X, Y: train_Y}))
-    evaluate(sess, X, Y)
+    # evaluate(sess, X, Y)
     plot()
     save_image(summary_writer)
 
