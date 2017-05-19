@@ -22,10 +22,13 @@ with tf.name_scope('Label'):
     Y = tf.placeholder("float", name='Y')
 
 # Training data
-train_X1 = np.array([np.arange(100)]).T
-train_X2 = train_X1 * train_X1
+train_X1 = np.array([np.linspace(1, 10, 100)]).T
+train_X2 = np.array([np.linspace(1, 20, 100)]).T
 train_X = np.c_[train_X1, train_X2]
-train_Y = 2 * train_X1 + train_X2 + 1
+# train_Y = 2 * train_X1 + 10 * train_X2 + 10
+# train_Y = np.sin(np.square(train_X1 + train_X2))
+train_Y = np.square(train_X1 + train_X2)
+
 train_size = train_X1.size
 
 
@@ -56,7 +59,7 @@ def inputs():
 def train(total_loss):
     with tf.name_scope('Train'):
         # learning_rate = 0.000605
-        learning_rate = 0.1
+        learning_rate = 1
         # optimizer = tf.train.GradientDescentOptimizer(
         #     learning_rate).minimize(total_loss)
         optimizer = tf.train.AdamOptimizer(
@@ -69,7 +72,7 @@ def evaluate(sess, X, Y):
     # print(sess.run(inference([1.0])))  # 7
     # print(sess.run(inference([2.0])))  # 9
     print("--X --- Y -- predicted---")
-    print(np.c_[train_X1, train_Y, sess.run(
+    print(np.c_[train_X1, train_X2, train_Y, sess.run(
         inference(X), feed_dict={X: train_X})])
 
 
@@ -89,22 +92,32 @@ def plot():
 def plot3D():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
+    # ax = fig.gca(projection='3d')
     predicted = sess.run(inference(X), feed_dict={X: train_X})
-    ax.scatter(train_X1, train_X2, train_Y, c='r', marker='o')
-    ax.scatter(train_X1, train_X2, predicted, c='b', marker='.')
+    x = np.squeeze(np.asarray(train_X1))
+    y = np.squeeze(np.asarray(train_X2))
+    z = np.squeeze(np.asarray(train_Y))
+    z1 = np.squeeze(np.asarray(predicted))
+    ax.plot(x, y, zs=z, c='b', label='Original')
+    ax.plot(x, y, zs=z1, c='r', label='Fit')
+    # ax.scatter(train_X1, train_X2, train_Y, c='y', marker='s')
+    # ax.scatter(train_X1, train_X2, predicted, c='r', marker='v')
     ax.set_xlabel('X1')
     ax.set_ylabel('X2')
     ax.set_zlabel('Y')
+    ax.legend()
     buf = io.BytesIO()
     # plt.savefig("/tmp/test.png", format='png')
     plt.savefig(buf, format='png')
     buf.seek(0)
-    plt.show()
+    # If want to view image in Tensorboard, do not show plot => Strange bug!!!
+    # plt.show()
     return buf
 
 
 def save_image(summary_writer):
     plot_buf = plot3D()
+    # plot_buf = plot()
     image = tf.image.decode_png(plot_buf.getvalue(), channels=4)
     # Add the batch dimension
     image = tf.expand_dims(image, 0)
@@ -116,6 +129,8 @@ def save_image(summary_writer):
 
 # --------- Main program --------------------
 # plot3D()
+# quit()
+
 total_loss = loss(X, Y)
 # Create a summary to monitor cost tensor
 tf.summary.scalar("loss", total_loss)
@@ -135,11 +150,9 @@ with tf.Session() as sess:
     summary_writer = tf.summary.FileWriter(
         logs_path, graph=tf.get_default_graph())
     # actual training loop
-    training_steps = 1000
+    training_steps = 5000
     print_step = training_steps // 10
     for step in range(training_steps):
-        # for (x, y) in zip(train_X, train_Y):
-        #     summary = sess.run([train_op], feed_dict={X: x, Y: y})
         summary = sess.run([train_op], feed_dict={X: train_X, Y: train_Y})
         # print(summary[0][1])
         # Write logs at every iteration
@@ -147,9 +160,9 @@ with tf.Session() as sess:
         if step % print_step == 0:
             print("step:", step + 1, " loss: ",
                   sess.run([total_loss], feed_dict={X: train_X, Y: train_Y}),
-                  " weight:", sess.run(W), " bias:", sess.run(b))
+                  " weight:", sess.run(W).T, " bias:", sess.run(b))
 
-    print('W:', sess.run(W), 'b:', sess.run(b), " final loss:",
+    print('W:', sess.run(W).T, 'b:', sess.run(b), " final loss:",
           sess.run([total_loss], feed_dict={X: train_X, Y: train_Y}))
     # evaluate(sess, X, Y)
     save_image(summary_writer)
