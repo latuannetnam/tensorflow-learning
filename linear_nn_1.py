@@ -12,7 +12,7 @@ np.set_printoptions(suppress=True)
 rng = np.random
 logs_path = '/tmp/tensorflow_logs/linear_neuralnet'
 
-n_inputs = 2
+n_inputs = 1
 n_hidden1 = 2
 n_outputs = 1
 # Training data
@@ -22,7 +22,7 @@ train_X2 = train_X0 * train_X0
 # train_Y = 2 * train_X0 * train_X0 + 7
 train_Y = 2 * np.sin(train_X0) + 7
 
-train_X = np.c_[train_X1, train_X2]
+train_X = np.c_[train_X1]
 # train_X = np.c_[train_X1, train_X1]
 train_size = train_X.size
 
@@ -88,7 +88,7 @@ def plot3D(show=True):
 #     hidden1 = neuron_layer(X, n_hidden1, "hidden1")
 #     logits = neuron_layer(hidden1, n_outputs, "outputs")
 with tf.name_scope("dnn"):
-    hidden1 = tf.layers.dense(X, n_hidden1, name="hidden1")
+    hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu, name="hidden1")
     logits = tf.layers.dense(hidden1, n_outputs, name="outputs")
 
 with tf.name_scope("loss"):
