@@ -20,7 +20,11 @@ with tf.name_scope('Label'):
 
 # Training data
 train_X = np.array([np.arange(100)]).T
+# Test 1 => perfect fit with linear
 train_Y = 5 * train_X + 1
+# Test 2 => cat not fit with non-linear, use ANN instead
+train_Y = train_X * train_X + 2 * train_X + 1
+
 train_size = train_X.size
 
 
@@ -77,6 +81,7 @@ def plot():
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
+    plt.show()
     return buf
 
 
@@ -89,6 +94,7 @@ def save_image(summary_writer):
     image_summary_op = tf.summary.image("Linear Plot", image)
     image_summary = sess.run(image_summary_op)
     summary_writer.add_summary(image_summary)
+
 
 # --------- Main program --------------------
 total_loss = loss(X, Y)
@@ -127,7 +133,6 @@ with tf.Session() as sess:
     print('W:', sess.run(W), 'b:', sess.run(b), " final loss:",
           sess.run([total_loss], feed_dict={X: train_X, Y: train_Y}))
     # evaluate(sess, X, Y)
-    plot()
     save_image(summary_writer)
 
     coord.request_stop()
