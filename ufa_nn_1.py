@@ -14,6 +14,7 @@ logs_path = '/tmp/tensorflow_logs/ufa_nn1'
 
 n_inputs = 1
 n_hidden1 = 200
+n_hidden2 = 200
 n_outputs = 1
 # Training data
 train_X0 = np.array([np.linspace(1, 10, 100)]).T
@@ -22,7 +23,7 @@ train_X1 = train_X0
 # train_Y = 2 * train_X0 * train_X0 + np.sin(train_X0) + 7
 # train_Y = 2 * np.sin(train_X0) + 7
 # train_Y = 2 * train_X0 * train_X0 * train_X0 + np.sin(train_X0) + 7
-train_Y = np.cos(train_X0) - 7
+train_Y = np.cos(train_X0)*np.sin(train_X0) - 7
 train_X = np.c_[train_X1]
 train_size = train_X.size
 
@@ -36,9 +37,9 @@ with tf.name_scope('Label'):
 
 def inference(X, reuse=False):   # define neural network with 1 hidden layer
     with tf.variable_scope('Neural_Net', reuse=reuse):
-        hidden1_layer1 = tf.layers.dense(
-            X, n_hidden1, activation=tf.nn.tanh, name="hidden1")
-        model = tf.layers.dense(hidden1_layer1, n_outputs, name="outputs")
+        hidden1_layer = tf.layers.dense(
+            X, n_hidden1, activation=tf.nn.tanh, name="Hidden1")
+        model = tf.layers.dense(hidden1_layer, n_outputs, name="Output")
     return model
 
 
@@ -112,7 +113,7 @@ with tf.Session() as sess:
     summary_writer = tf.summary.FileWriter(
         logs_path, graph=tf.get_default_graph())
     # actual training loop
-    training_steps = 1000
+    training_steps = 5000
     print_step = training_steps // 10
     for step in range(training_steps):
         summary = sess.run([train_op], feed_dict={X: train_X, Y: train_Y})
@@ -130,3 +131,4 @@ with tf.Session() as sess:
     coord.request_stop()
     coord.join(threads)
     sess.close()
+
