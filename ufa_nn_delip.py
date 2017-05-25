@@ -12,8 +12,8 @@ np.random.seed(1000)   # for repro
 
 
 def function_to_learn(x):
-    # return np.sin(x) + 0.1 * np.random.randn(*x.shape)
-    return x * x * x + 0.1 * np.random.randn(*x.shape)
+    return np.sin(x) + 0.1 * np.random.randn(*x.shape)
+    # return x * x * x + 0.1 * np.random.randn(*x.shape)
 
 
 NUM_HIDDEN_NODES = 100

@@ -43,7 +43,7 @@ def func_to_approx(x):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--nb_neurons", default=50,
+    parser.add_argument("--nb_neurons", default=200,
                         type=int, help="Number of neurons")
     args = parser.parse_args()
 
