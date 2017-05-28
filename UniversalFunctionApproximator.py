@@ -24,8 +24,9 @@ class UniversalFunctionApproximator:
                  learning_rate=0.1,
                  epochs=1000, batch_size=100,
                  split_ratio=0.8):
-        self.sess = tf.Session(config=tf.ConfigProto(
-            intra_op_parallelism_threads=UniversalFunctionApproximator.NUM_THREADS))
+        # self.sess = tf.Session(config=tf.ConfigProto(
+        #     intra_op_parallelism_threads=UniversalFunctionApproximator.NUM_THREADS))
+        self.sess = tf.Session()
         self.logs_path = UniversalFunctionApproximator.LOG_ROOT_DIR + "ufa"
 
         self.input_X = input_X
@@ -47,94 +48,103 @@ class UniversalFunctionApproximator:
         # number of features of train data: X1, X2 ...
         self.n_features = input_X.shape[1]
 
+        self.train_X = input_X[:self.train_size]  # train data
+        self.test_X = input_X[self.train_size:]   # test data
+        self.train_Y = label_Y[:self.train_size]  # train label
+        self.test_Y = label_Y[self.train_size:]   # test label
         # preload input into queue
         self.preload()
-        # self.train_X = input_X[:self.train_size]  # train data
-        # self.test_X = input_X[self.train_size:]   # test data
-        # self.train_Y = label_Y[:self.train_size]  # train label
-        # self.test_Y = label_Y[self.train_size:]   # test label
-
-        # with tf.variable_scope('Input', reuse=False):  # place holder for Input
-        #     self.X = tf.placeholder("float", shape=(
-        #         None, self.n_features), name="X")
-        # with tf.variable_scope('Label', reuse=False):  # place holder for Label
-        #     self.Y = tf.placeholder("float", shape=(None), name='Y')
-        if self.n_neurals < 2:  # use linear regression
-            with tf.variable_scope("Weights", reuse=False):
-                self.W = tf.Variable(
-                    tf.zeros([self.n_features, 1]), name="weights")
-                self.b = tf.Variable(tf.zeros([1]), name="bias")
-
-    def preload(self):  # preload data into queue
-        with tf.name_scope('preload'):
-            print("X dtype:", self.input_X.dtype)
-            # Input data
-            self.x_initializer = tf.placeholder(
-                self.input_X.dtype,
-                shape=(self.input_X.shape[0], self.n_features))
-            self.labels_initializer = tf.placeholder(
-                self.label_Y.dtype,
-                shape=(self.label_Y.shape[0], 1))
-            self.preload_X = tf.Variable(
-                self.x_initializer, trainable=False, collections=[])
-            self.preload_Y = tf.Variable(
-                self.labels_initializer, trainable=False, collections=[])
-
-            self.input, self.label = tf.train.slice_input_producer(
-                [self.preload_X, self.preload_Y], num_epochs=self.epochs)
-
-            self.X, self.Y = tf.train.batch(
-                [self.input, self.label],
-                batch_size=self.batch_size,
-                allow_smaller_final_batch=True)
 
     def __del__(self):
         self.coord.request_stop()
         self.coord.join(threads)
         self.sess.close()
 
+    def preload(self):  # preload data into queue
+        with tf.name_scope('Input'):
+            # Input data
+            self.train_x_initializer = tf.placeholder(
+                self.train_X.dtype,
+                shape=(self.train_X.shape[0], self.n_features))
+            self.train_y_initializer = tf.placeholder(
+                self.train_Y.dtype,
+                shape=(self.train_Y.shape[0], 1))
+            self.batch_train_X = tf.Variable(
+                self.train_x_initializer, trainable=False, collections=[], name='Input_X')
+            self.batch_train_Y = tf.Variable(
+                self.train_y_initializer, trainable=False, collections=[], name='Label_Y')
+
+            train_input, train_label = tf.train.slice_input_producer(
+                [self.batch_train_X, self.batch_train_Y], num_epochs=self.epochs)
+
+            self.X, self.Y = tf.train.batch(
+                [train_input, train_label],
+                batch_size=self.batch_size,
+                allow_smaller_final_batch=True)
+
     def dump_input(self):
-        train = np.c_[self.input_X, self.label_Y]
+        train = np.c_[self.train_X, self.train_Y]
         print("Train size:", train.shape[0])
-        # print(train)
-        # test = np.c_[self.test_X, self.test_Y]
-        # print("test size:", test.shape[0])
-        # print(test)
+        test = np.c_[self.test_X, self.test_Y]
+        print("test size:", test.shape[0])
         print("Number of features:", self.n_features)
         print("Number of hidden layers:",
               str(self.n_layers) + " neurons:" + str(self.n_neurals))
         print('Epochs:' + str(self.epochs) + " batch:" +
               str(self.batch_size) +
               " alpha:" + str(self.learning_rate))
+        print("Number of steps:" + str(self.epochs * self.train_X.shape[0] /
+                                       self.batch_size))
 
-    def inference(self, X, reuse=False):   # define neural network with 1 hidden layer
-        if self.n_neurals < 2:  # use linear regression
+    def inference(self, X, reuse=False):   # define neural network
+        if self.n_layers == 0:  # use linear regression
             with tf.variable_scope('Model', reuse=reuse):
-                model = tf.add(tf.matmul(X, self.W), self.b)
+                # model = tf.add(tf.matmul(X, self.W), self.b)
+                model = tf.layers.dense(
+                    X, 1)
         else:  # use neural network
             with tf.variable_scope('Neural_Net', reuse=reuse):
-                hidden1_layer = tf.layers.dense(
-                    X, self.n_neurals, activation=tf.nn.tanh,
-                    name="Hidden1")
-                hidden2_layer = tf.layers.dense(
-                    hidden1_layer, self.n_neurals, activation=tf.nn.relu6,
-                    name="Hidden2")
-                hidden3_layer = tf.layers.dense(
-                    hidden2_layer, self.n_neurals, activation=tf.nn.relu6,
-                    name="Hidden3")
+                if self.n_layers == 1:
+                    activation = tf.nn.tanh
+                else:
+                    activation = tf.nn.relu
+                initializer = tf.contrib.layers.xavier_initializer()
+                regularizer = tf.contrib.layers.l2_regularizer(0.5)
+                # regularizer = None
+                last_layer = X
+                n_neurals = self.n_neurals
+                for n_layer in range(1, self.n_layers + 1):
+                    layer = tf.layers.dense(
+                        last_layer, n_neurals, activation=activation,
+                        kernel_initializer=initializer,
+                        bias_initializer=initializer,
+                        kernel_regularizer=regularizer,
+                        bias_regularizer=regularizer,
+                        activity_regularizer=regularizer,
+                        name="Hidden-" + str(n_layer))
+                    last_layer = layer
+                    n_neurals = int(n_neurals/2)
+                    if n_neurals < 2:
+                        n_neurals = 2
+
                 model = tf.layers.dense(
-                    hidden1_layer, 1, name="Output")
+                    last_layer, 1, name="Output",
+                    kernel_initializer=initializer,
+                    bias_initializer=initializer,
+                    kernel_regularizer=regularizer,
+                    bias_regularizer=regularizer,
+                    activity_regularizer=regularizer,
+                )
         return model
 
-    def loss(self, reuse=False):
-        Y_predicted = self.inference(self.X)
-        logits = tf.log(Y_predicted)
+    def loss(self, X, Y, reuse=False):
+        Y_predicted = self.inference(X)
         with tf.variable_scope("Loss", reuse=reuse):
-            # cost = tf.reduce_sum(tf.squared_difference(
-            #     self.Y, Y_predicted))
-            cost = tf.nn.l2_loss(Y_predicted - self.Y)
+            cost = tf.reduce_sum(tf.squared_difference(
+                Y, Y_predicted))
+            # cost = tf.nn.l2_loss(Y_predicted - Y)
             # cost = tf.nn.sigmoid_cross_entropy_with_logits(
-            #     None, logits=Y_predicted, labels=self.Y)
+            #     None, logits=Y_predicted, labels=Y)
             # cost = tf.reduce_mean(cost)
         return cost
 
@@ -144,10 +154,10 @@ class UniversalFunctionApproximator:
                 self.learning_rate).minimize(total_loss)
         return optimizer
 
-    def plot(self, show=True):
+    def plot(self, X, Y, show=True):
         # Graphic display
-        # predicted = self.sess.run(self.inference(reuse=True))
-        title = 'Epochs:' + str(self.epochs) + \
+        predicted = self.sess.run(self.predict_model(X))
+        title = str(self.step) + ': Epochs:' + str(self.epochs) + \
             " batch:" + str(self.batch_size) + \
             " layers:" + str(self.n_layers) + \
             " neurons:" + str(self.n_neurals) + \
@@ -156,33 +166,40 @@ class UniversalFunctionApproximator:
             plt.title(title)
             # plt.plot(self.train_X, self.train_Y, c='b', label='Original data')
             # plt.plot(self.train_X, predicted, c='r', label='Fitted')
-            plt.scatter(self.input_X, self.label_Y,
+            plt.scatter(X, Y,
                         c='b', label='Original data')
-            print(self.input_X.size)
-            print(self.predicted.size)            
-            plt.scatter(self.input_X, self.predicted, c='r', label='Fitted')
+            plt.scatter(X, predicted, c='r', label='Fitted')
 
             plt.legend()
         else:  # plot 3D for X1, X2
             if (self.n_features == 2):
-                train_X1, train_X2 = np.hsplit(self.input_X, self.n_features)
+                train_X1, train_X2 = np.hsplit(X, self.n_features)
             else:
                 train_X1, train_X2, _ = np.hsplit(
-                    self.input_X, self.n_features)
+                    X, self.n_features)
             fig = plt.figure()
-            # ax = fig.add_subplot(111, projection='3d')
             ax = fig.gca(projection='3d')
             ax.text2D(0.05, 0.95, title, transform=ax.transAxes)
+            # line plot
             # x = np.squeeze(np.asarray(train_X1))
             # y = np.squeeze(np.asarray(train_X2))
-            # z = np.squeeze(np.asarray(self.label_Y))
-            # z1 = np.squeeze(np.asarray(self.predicted))
+            # z = np.squeeze(np.asarray(Y))
+            # z1 = np.squeeze(np.asarray(predicted))
             # ax.plot(x, y, zs=z, c='b', label='Original data')
             # ax.plot(x, y, zs=z1, c='r', label='Fitted')
-            ax.scatter(train_X1, train_X2, self.label_Y, c='b',
+
+            # statter plot
+            ax.scatter(train_X1, train_X2, Y, c='b',
                        marker='s', label='Original data')
-            ax.scatter(train_X1, train_X2, self.predicted,
-                       c='r', marker='v', label='Fitted')
+            # ax.scatter(train_X1, train_X2, predicted,
+            #            c='r', marker='v', label='Fitted')
+
+            # trisurf plot
+            # ax.plot_trisurf(np.ravel(train_X1),
+            #                 np.ravel(train_X2), np.ravel(Y), color='b')
+            ax.plot_trisurf(np.ravel(train_X1),
+                            np.ravel(train_X2), np.ravel(predicted), color='r')
+
             ax.set_xlabel('X1')
             ax.set_ylabel('X2')
             ax.set_zlabel('Y')
@@ -203,22 +220,29 @@ class UniversalFunctionApproximator:
         else:
             plt.savefig(buf, format='png')
             buf.seek(0)
-        plt.close('all')
+        plt.close()
+        # plt.clf()
         return buf
 
-    def save_image(self):
-        plot_buf = self.plot(show=False)
+    def save_image(self, X, Y):
+        plot_buf = self.plot(X, Y, show=False)
         # plot_buf = plot()
         image = tf.image.decode_png(plot_buf.getvalue(), channels=4)
         # Add the batch dimension
         image = tf.expand_dims(image, 0)
         # Add image summary
-        image_summary_op = tf.summary.image("Function approximation", image)
+        image_summary_op = tf.summary.image(
+            "Function approximation-" + str(self.step), image)
         image_summary = self.sess.run(image_summary_op)
         self.summary_writer.add_summary(image_summary)
 
+    def predict_model(self, X):
+        Y_predicted = self.inference(
+            tf.convert_to_tensor(X), reuse=True)
+        return Y_predicted
+
     def fit_model(self):  # run loop to train model
-        total_loss = self.loss()
+        total_loss = self.loss(self.X, self.Y)
         # Create a summary to monitor cost tensor
         tf.summary.scalar("loss", total_loss)
         # Merge all summaries into a single op
@@ -228,12 +252,10 @@ class UniversalFunctionApproximator:
         ), tf.local_variables_initializer()]
         # Launch the graph in a session, setup boilerplate
         self.sess.run(init)
-        self.sess.run(self.preload_X.initializer,
-                      feed_dict={self.x_initializer: self.input_X})
-        self.sess.run(self.preload_Y.initializer,
-                      feed_dict={self.labels_initializer: self.label_Y})
-        print(self.preload_X.get_shape())
-        print(self.preload_Y.get_shape())
+        self.sess.run(self.batch_train_X.initializer,
+                      feed_dict={self.train_x_initializer: self.train_X})
+        self.sess.run(self.batch_train_Y.initializer,
+                      feed_dict={self.train_y_initializer: self.train_Y})
         self.coord = tf.train.Coordinator()
         self.threads = tf.train.start_queue_runners(
             sess=self.sess, coord=self.coord)
@@ -243,36 +265,40 @@ class UniversalFunctionApproximator:
 
         # actual training loop
         try:
-            loss = 0
-            print_step = self.epochs // 10
-            step = 0
-            Y_predicted = []
+            train_loss = 0
+            print_step = (self.epochs * self.train_X.shape[0] /
+                          self.batch_size) // 10
+            if print_step == 0:
+                print_step = 1
+            print("Print step:" + str(print_step))
+            self.step = 0
             while not self.coord.should_stop():
                 # Run one step of the model.
                 result = self.sess.run([train_op])
-                loss = result[0][1]
+                train_loss = result[0][1]
                 summary = result[0][2]
                 # Write logs at every iteration
-                self.summary_writer.add_summary(summary, step + 1)
-                if step % print_step == 0:
-                    print("step:", step + 1, " loss: ", loss)
-                step += 1
+                self.summary_writer.add_summary(summary, self.step + 1)
+                if self.step % print_step == 0:
+                    test_predicted = self.predict_model(self.test_X)
+                    test_loss = self.sess.run(tf.reduce_sum(tf.squared_difference(
+                        self.test_Y, test_predicted)))
+                    print("step:", self.step + 1, " train loss: ", train_loss,
+                          " test loss:", test_loss)
+                    #   str(tf.nn.l2_loss(test_predicted, self.test_Y)))
+                    # print(np.c_[self.label_Y,self.predict_model()])
+                    self.save_image(self.train_X, self.train_Y)
+                self.step += 1
         except tf.errors.OutOfRangeError:
-            print('Done training for:', step, " epochs")
+            print('Done training for:', self.step, " epochs")
         finally:
             # When done, ask the threads to stop.
-            print(" final loss:", loss)
-            predicted = self.inference(tf.stack(self.input_X), reuse=True)
-            self.sess.run(predicted)
-            self.predicted = predicted.eval(self.sess)
-            print(predicted.size)
-            self.save_image()
+            test_predicted = self.predict_model(self.test_X)
+            test_loss = self.sess.run(tf.reduce_sum(tf.squared_difference(
+                self.test_Y, test_predicted)))
+            print(" final loss:", train_loss, " test lost:", test_loss)
+            # str(
+            #     tf.nn.l2_loss(test_predicted, self.test_Y)))
 
-        # predicted = 0
-        # try:  # run predict
-        #     predicted = self.sess.run(self.inference(reuse=True))
-
-        # except tf.errors.OutOfRangeError:
-        #     print('Done predicted for:')
-        # finally:
-        #     print(predicted.get_shape())
+            self.save_image(self.input_X, self.label_Y)
+            self.plot(self.train_X, self.train_Y)
