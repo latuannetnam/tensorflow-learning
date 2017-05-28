@@ -11,34 +11,6 @@ np.set_printoptions(precision=3)
 np.set_printoptions(suppress=True)
 rng = np.random
 logs_path = '/tmp/tensorflow_logs/linear_multivariate'
-with tf.name_scope("Weights"):
-    W = tf.Variable(tf.zeros([2, 1]), name="weights")
-    b = tf.Variable(tf.zeros([1]), name="bias")
-
-with tf.name_scope('Input'):
-    # tf Graph Input
-    X = tf.placeholder("float", name='X')
-with tf.name_scope('Label'):
-    Y = tf.placeholder("float", name='Y')
-
-# Training data
-train_X0 = np.array([np.linspace(1, 10, 100)]).T
-# Test set 1 => perfect fit line
-# train_X1 = np.cos(train_X0)
-# train_X2 = train_X0 * train_X0 + 2 * np.sin(train_X0 * train_X0)
-# train_Y = 2 * train_X1 + 3 * train_X2 + 6
-# Test set 2
-train_X1 = train_X0
-train_X2 = train_X0 * train_X0
-train_Y = 2 * train_X0 * train_X0 + 3 * train_X0 * train_X0 * train_X0 + 7
-# # Test set N => can not fit line
-# train_X1 = train_X0
-# train_X2 = np.array([np.linspace(0.1, 5, 100)]).T
-# train_Y = np.random.rand(100, 1) * 10
-# train_Y = 2 * train_X1 * train_X1 + 3
-
-train_X = np.c_[train_X1, train_X2]
-train_size = train_X1.size
 
 
 def inference(X):
@@ -141,8 +113,35 @@ def save_image(summary_writer):
 
 
 # --------- Main program --------------------
-# plot3D()
-# quit()
+with tf.name_scope("Weights"):
+    W = tf.Variable(tf.zeros([2, 1]), name="weights")
+    b = tf.Variable(tf.zeros([1]), name="bias")
+
+with tf.name_scope('Input'):
+    # tf Graph Input
+    X = tf.placeholder("float", name='X')
+with tf.name_scope('Label'):
+    Y = tf.placeholder("float", name='Y')
+
+# Training data
+train_X0 = np.array([np.linspace(1, 10, 100)]).T
+# Test set 1 => perfect fit line
+# train_X1 = np.cos(train_X0)
+# train_X2 = train_X0 * train_X0 + 2 * np.sin(train_X0 * train_X0)
+# train_Y = 2 * train_X1 + 3 * train_X2 + 6
+# Test set 2
+train_X1 = train_X0
+train_X2 = train_X0 * train_X0
+train_Y = 2 * train_X0 * train_X0 + 3 * train_X0 * train_X0 * train_X0 + 7
+# # Test set N => can not fit line
+# train_X1 = train_X0
+# train_X2 = np.array([np.linspace(0.1, 5, 100)]).T
+# train_Y = np.random.rand(100, 1) * 10
+# train_Y = 2 * train_X1 * train_X1 + 3
+
+train_X = np.c_[train_X1, train_X2]
+train_size = train_X1.size
+
 
 total_loss = loss(X, Y)
 # Create a summary to monitor cost tensor
