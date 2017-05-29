@@ -54,16 +54,11 @@ elif choice == 4:  # test set 4
     NUM_LAYERS = 2
     NUM_HIDDEN_NODES = 100
     MINI_BATCH_SIZE = 10
-    NUM_EPOCHS = 2
+    NUM_EPOCHS = 1000
     LEARNING_RATE = 0.001
-    train_X0 = np.array([np.linspace(-10, 10, 100)]).T
+    train_X0 = np.float32(np.array([np.linspace(-10., 10., 100)]).T)
     train_Y = np.cos(train_X0) * np.sin(train_X0)
     train_X = np.c_[train_X0]
-
-    test_X = np.array([np.linspace(0, 20, 100)]).T
-    train_X0 = test_X
-    test_Y = np.cos(train_X0) * np.sin(train_X0)
-
 
 elif choice == 5:  # test set 5
     NUM_LAYERS = 2
@@ -92,8 +87,8 @@ elif choice == 6:  # test set 3
     blood_fat_content = [354, 190, 405, 263, 451, 302, 288, 385, 402, 365, 209,
                          290, 346, 254, 395, 434, 220, 374, 308, 220, 311, 181,
                          274, 303, 244]
-    train_Y = np.array([blood_fat_content]).T.astype(float)
-    train_X = np.array(weight_age).astype(float)
+    train_Y = np.float32(np.array([blood_fat_content]).T)
+    train_X = np.float32(np.array(weight_age))
 
 print("X shape:", train_X.shape, " Y shape:", train_Y.shape)
 ufa = LinearRegression(train_X, train_Y,

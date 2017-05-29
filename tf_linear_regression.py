@@ -238,7 +238,7 @@ class LinearRegression:
 
         train_loss = 0
         train_all_loss = []
-        train_all_W = []
+        train_all_W = np.array([])
         train_all_b = []
         print_step = self.epochs // 10
         if print_step == 0:
@@ -252,7 +252,10 @@ class LinearRegression:
             train_all_loss = np.append(train_all_loss, train_loss)
             summary = result[0][2]
             W, b = self.sess.run([self.W, self.b])
-            train_all_W = np.append(train_all_W, W)
+            if train_all_W.size == 0:
+                train_all_W = W.T
+            else:
+                train_all_W = np.concatenate((train_all_W, W.T))
             train_all_b = np.append(train_all_b, b)
             # Write logs at every iteration
             self.summary_writer.add_summary(summary, self.step + 1)
@@ -275,10 +278,10 @@ class LinearRegression:
               " weight:", W.T,
               " bias:", b,
               " test loss:", test_loss)
-        # print(train_all_W)
-        print(np.array([train_all_W]).T.shape, np.array(
-            [train_all_b]).T.shape, np.array([train_all_loss]).T.shape, self.train_X.shape)
+        print(np.array([train_all_W[:, 0]]).T.shape, np.array(
+            [train_all_b]).T.shape, np.array([train_all_loss]).T.shape, 
+            self.train_X.shape)
         self.save_image(self.input_X, self.label_Y)
         # self.plot(self.train_X, self.train_Y)
-        self.plot_loss(np.array([train_all_W]).T, np.array(
+        self.plot_loss(np.array([train_all_W[:, 0]]).T, np.array(
             [train_all_b]).T, np.array([train_all_loss]).T),
