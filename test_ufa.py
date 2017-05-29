@@ -5,10 +5,10 @@ import time
 # from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from UniversalFunctionApproximator import UniversalFunctionApproximator
 
-NUM_EXAMPLES = 100
+NUM_EXAMPLES = 1000
 TRAIN_SPLIT = .7
 
-choice = 6
+choice = 7
 # train_X0 = np.array([np.linspace(-10, 10, 50)]).T
 train_X0 = np.float32(
     np.random.uniform(math.pi, 6 * math.pi, (1, NUM_EXAMPLES))).T
@@ -41,11 +41,12 @@ elif choice == 3:  # test set 3
     NUM_HIDDEN_NODES = 500
     MINI_BATCH_SIZE = 10
     # NUM_EPOCHS = 50000
-    NUM_EPOCHS = 2
+    NUM_EPOCHS = 200
     LEARNING_RATE = 0.0001
 
     train_X1 = train_X0
-    train_X2 = train_X0 * train_X0
+    # train_X2 = train_X0 * train_X0
+    train_X2 = train_X0 * 1.5
     train_Y = np.sin(train_X1 + train_X2)
     train_X = np.c_[train_X1, train_X2]
 
@@ -62,7 +63,6 @@ elif choice == 4:  # test set 4
     test_X = np.array([np.linspace(0, 20, 100)]).T
     train_X0 = test_X
     test_Y = np.cos(train_X0) * np.sin(train_X0)
-
 
 elif choice == 5:  # test set 5
     NUM_LAYERS = 2
@@ -93,6 +93,19 @@ elif choice == 6:  # test set 3
                          274, 303, 244]
     train_Y = np.array([blood_fat_content]).T.astype(float)
     train_X = np.array(weight_age).astype(float)
+
+elif choice == 7:  # test set 3
+    NUM_LAYERS = 2
+    NUM_HIDDEN_NODES = 64
+    MINI_BATCH_SIZE = 10
+    # NUM_EPOCHS = 50000
+    NUM_EPOCHS = 1000
+    LEARNING_RATE = 0.01
+    train_X1 = np.array([np.linspace(-10, 10, NUM_EXAMPLES)]).T
+    train_X2 = np.array([np.linspace(-50, 50, NUM_EXAMPLES)]).T
+    train_X = np.c_[train_X1, train_X2]
+    train_Y = train_X1 + train_X2 * train_X1 + 3
+
 
 print("X shape:", train_X.shape, " Y shape:", train_Y.shape)
 ufa = UniversalFunctionApproximator(train_X, train_Y,

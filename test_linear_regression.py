@@ -8,7 +8,7 @@ from tf_linear_regression import LinearRegression
 NUM_EXAMPLES = 100
 TRAIN_SPLIT = .7
 
-choice = 3
+choice = 1
 # train_X0 = np.array([np.linspace(-10, 10, 50)]).T
 train_X0 = np.float32(
     np.random.uniform(math.pi, 6 * math.pi, (1, NUM_EXAMPLES))).T
@@ -19,10 +19,11 @@ if choice == 1:  # test set 1
     NUM_LAYERS = 1
     NUM_HIDDEN_NODES = 500
     MINI_BATCH_SIZE = 10
-    NUM_EPOCHS = 100
+    NUM_EPOCHS = 2000
     LEARNING_RATE = 0.1
-    train_Y = 5 * train_X0 - 10
     train_X = np.c_[train_X0]
+    train_Y = 5 * train_X0 - 10
+
 
 elif choice == 2:  # test set 2
     # best paramaters for function

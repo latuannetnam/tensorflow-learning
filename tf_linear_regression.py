@@ -52,10 +52,10 @@ class LinearRegression:
                 None, self.n_features), name="X")
         with tf.variable_scope('Label', reuse=False):  # place holder for Label
             self.Y = tf.placeholder("float", shape=(None), name='Y')
-        with tf.variable_scope("Weights", reuse=False):
-            self.W = tf.Variable(
-                tf.zeros([self.n_features, 1]), dtype=tf.float32, name="weights")
-            self.b = tf.Variable(tf.zeros([1]), dtype=tf.float32, name="bias")
+        # with tf.variable_scope("Weights", reuse=False):
+        self.W = tf.Variable(
+            tf.zeros([self.n_features, 1]), dtype=tf.float32, name="weights")
+        self.b = tf.Variable(tf.zeros([1]), dtype=tf.float32, name="bias")
 
     def __del__(self):
         self.coord.request_stop()

@@ -191,14 +191,15 @@ class UniversalFunctionApproximator:
             # statter plot
             ax.scatter(train_X1, train_X2, Y, c='b',
                        marker='s', label='Original data')
-            # ax.scatter(train_X1, train_X2, predicted,
-            #            c='r', marker='v', label='Fitted')
+            ax.scatter(train_X1, train_X2, predicted,
+                       c='r', marker='v', label='Fitted')
 
             # trisurf plot
             # ax.plot_trisurf(np.ravel(train_X1),
             #                 np.ravel(train_X2), np.ravel(Y), color='b')
-            ax.plot_trisurf(np.ravel(train_X1),
-                            np.ravel(train_X2), np.ravel(predicted), color='r')
+            # print(predicted.shape, np.ravel(predicted).shape)
+            # ax.plot_trisurf(np.ravel(train_X1),
+            #                 np.ravel(train_X2), np.ravel(predicted), color='r')
 
             ax.set_xlabel('X1')
             ax.set_ylabel('X2')
@@ -301,4 +302,4 @@ class UniversalFunctionApproximator:
             #     tf.nn.l2_loss(test_predicted, self.test_Y)))
 
             self.save_image(self.input_X, self.label_Y)
-            self.plot(self.train_X, self.train_Y)
+            # self.plot(self.train_X, self.train_Y)
