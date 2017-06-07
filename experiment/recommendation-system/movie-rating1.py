@@ -71,17 +71,18 @@ items = pd.read_csv(data_folder + 'ml-100k/u.item', sep='|', names=i_cols,
 
 n_items = items.shape[0]
 print('Number of items:', n_items)
-
 # print(items.head())
 
 X0 = items.as_matrix()
 X_train_counts = X0[:, -19:]
 print('feature matrix:', X_train_counts.shape)
+print(X_train_counts)
 
 # tfidf
 transformer = TfidfTransformer(smooth_idf=True, norm='l2')
 tfidf = transformer.fit_transform(X_train_counts.tolist()).toarray()
 print('tfidf size:', tfidf.shape)
+print(tfidf)
 
 # ridge regression
 print('Training ...')
