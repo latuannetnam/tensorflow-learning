@@ -8,7 +8,7 @@ from UniversalFunctionApproximator import UniversalFunctionApproximator
 NUM_EXAMPLES = 1000
 TRAIN_SPLIT = .7
 
-choice = 7
+choice = 3
 # train_X0 = np.array([np.linspace(-10, 10, 50)]).T
 train_X0 = np.float32(
     np.random.uniform(math.pi, 6 * math.pi, (1, NUM_EXAMPLES))).T
@@ -40,8 +40,8 @@ elif choice == 3:  # test set 3
     NUM_LAYERS = 5
     NUM_HIDDEN_NODES = 500
     MINI_BATCH_SIZE = 10
-    # NUM_EPOCHS = 50000
-    NUM_EPOCHS = 200
+    NUM_EPOCHS = 50000
+    # NUM_EPOCHS = 200
     LEARNING_RATE = 0.0001
 
     train_X1 = train_X0

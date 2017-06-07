@@ -8,7 +8,7 @@ from tf_linear_regression import LinearRegression
 NUM_EXAMPLES = 100
 TRAIN_SPLIT = .7
 
-choice = 1
+choice = 3
 # train_X0 = np.array([np.linspace(-10, 10, 50)]).T
 train_X0 = np.float32(
     np.random.uniform(math.pi, 6 * math.pi, (1, NUM_EXAMPLES))).T
@@ -90,6 +90,7 @@ elif choice == 6:  # test set 3
                          274, 303, 244]
     train_Y = np.float32(np.array([blood_fat_content]).T)
     train_X = np.float32(np.array(weight_age))
+    
 
 print("X shape:", train_X.shape, " Y shape:", train_Y.shape)
 ufa = LinearRegression(train_X, train_Y,
