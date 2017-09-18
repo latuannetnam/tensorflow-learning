@@ -23,7 +23,7 @@ import tensorflow as tf
 tf.flags.DEFINE_boolean('mkl', True,
                         """whether to enable force_gpu_compatible in
                         GPU_Options""")
-tf.flags.DEFINE_integer('kmp_blocktime', 30,
+tf.flags.DEFINE_integer('kmp_blocktime', 0,
                         """Sets the time, in milliseconds, that a thread should 
                         wait, after completing the execution of a parallel
                         region, before sleeping""")
@@ -34,7 +34,7 @@ tf.flags.DEFINE_string('kmp_affinity', 'granularity=fine,verbose,compact,1,0',
 tf.flags.DEFINE_integer('kmp_settings', 1,
                         """If set to 1, OpenMP run time library environment
                         variables will nto be printed.""")
-tf.flags.DEFINE_integer('num_intra_threads', 8,
+tf.flags.DEFINE_integer('num_intra_threads', 0,
                         """Number of threads to use for intra-op
                        parallelism. If set to 0, the system will pick
                        an appropriate number.""")
@@ -42,7 +42,7 @@ FLAGS = tf.flags.FLAGS
 
 # Set environment variables for MKL
 if FLAGS.mkl:
-    os.environ["KMP_BLOCKTIME"] = str(FLAGS.kmp_blocktime)
+    # os.environ["KMP_BLOCKTIME"] = str(FLAGS.kmp_blocktime)
     os.environ["KMP_SETTINGS"] = str(FLAGS.kmp_settings)
     os.environ["KMP_AFFINITY"] = FLAGS.kmp_affinity
     if FLAGS.num_intra_threads > 0:

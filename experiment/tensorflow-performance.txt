@@ -1,0 +1,10 @@
+tensorflow 1.1 : 218.94880509376526
+tensorflow 3 : 215.48325324058533
+tensorflow 4, mkl : 535.1653373241425 
+tensorflow 4, mkl + native: 519.0074596405029
+tensorflow 4, mkl + native, num_intra_threads'=0, 'kmp_blocktime'= 0: 436.68226170539856
+tensorflow 4, mkl + native, num_intra_threads'=0, 'kmp_blocktime'=200: 411.39817786216736
+tensorflow 4, native: 241.5912160873413
+
+
+
